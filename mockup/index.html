@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Pointr — All your rewards, one place</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple-deep: #26215C;
+      --purple-mid: #534AB7;
+      --purple-light: #EEEDFE;
+      --green-earn: #0F6E56;
+      --amber-warn: #D97706;
+      --amber-warn-bg: #FAEEDA;
+      --amber-warn-text: #854F0B;
+      --red-qf: #B91C1C;
+      --violet-vel: #6D28D9;
+      --green-er: #059669;
+      --surface: #FAFAF9;
+      --card: #FFFFFF;
+      --border: rgba(0,0,0,0.08);
+      --border-warn: #EF9F27;
+      --text-primary: #0F0F0F;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'DM Sans', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: linear-gradient(135deg, #F5F3FF 0%, #FDF2F8 50%, #FFF7ED 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 16px 40px;
+    }
+
+    /* Top brand bar */
+    .brand-bar {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .brand-name {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--purple-deep);
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      background: var(--purple-light);
+      color: var(--purple-mid);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* Phone frame */
+    .phone {
+      width: 375px;
+      max-width: 100%;
+      height: 760px;
+      border-radius: 48px;
+      border: 10px solid #111;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Status bar */
+    .status-bar {
+      background: var(--surface);
+      padding: 12px 22px 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      flex-shrink: 0;
+    }
+    .status-icons { display: flex; gap: 4px; align-items: center; }
+    .status-icons i { font-size: 14px; }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Screen */
+    .screen { padding: 16px; display: none; }
+    .screen.active { display: block; }
+
+    /* Bottom nav */
+    .bottom-nav {
+      background: var(--card);
+      border-top: 0.5px solid var(--border);
+      padding: 8px 0 14px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: var(--sans);
+      transition: color 0.15s;
+    }
+    .nav-btn i { font-size: 22px; }
+    .nav-btn span { font-size: 10px; font-weight: 500; }
+    .nav-btn.active { color: var(--purple-mid); }
+    .nav-scan {
+      background: var(--purple-deep) !important;
+      color: white !important;
+      padding: 8px 16px !important;
+      border-radius: 16px !important;
+      margin-top: -12px;
+    }
+    .nav-scan.active { color: white !important; }
+
+    /* Section label */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    /* Screen header */
+    .screen-header { margin-bottom: 14px; }
+    .screen-title { font-size: 20px; font-weight: 500; color: var(--text-primary); margin-bottom: 2px; }
+    .screen-sub { font-size: 12px; color: var(--text-secondary); }
+
+    /* Hero card */
+    .hero-card {
+      background: var(--purple-deep);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 12px;
+      color: white;
+    }
+    .hero-label { font-size: 10px; opacity: 0.55; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+    .hero-amount { font-size: 40px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+    .hero-sub { font-size: 10px; opacity: 0.5; margin-top: 4px; }
+    .hero-actions { display: flex; gap: 6px; margin-top: 14px; }
+    .hero-action-btn {
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 6px 11px;
+      font-size: 11px;
+      color: white;
+      font-family: var(--sans);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Coach card */
+    .coach-card {
+      background: var(--purple-light);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border-left: 3px solid var(--purple-mid);
+    }
+    .coach-label { font-size: 9px; color: var(--purple-mid); font-weight: 700; letter-spacing: 0.07em; margin-bottom: 4px; text-transform: uppercase; }
+    .coach-text { font-size: 12px; color: var(--purple-deep); line-height: 1.5; }
+    .coach-cta { font-size: 11px; color: var(--purple-mid); font-weight: 500; margin-top: 6px; }
+
+    /* Program row */
+    .program-row {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 7px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .program-row.warn { border-color: var(--border-warn); }
+    .program-pip { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+    .program-info { flex: 1; min-width: 0; }
+    .program-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .program-meta { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+    .program-meta.warn { color: #BA7517; font-weight: 500; }
+    .program-values { text-align: right; }
+    .program-pts { font-size: 15px; font-weight: 700; font-family: var(--mono); color: var(--text-primary); }
+    .program-val { font-size: 10px; color: var(--green-earn); font-weight: 500; margin-top: 1px; }
+
+    /* Dark loyalty cards */
+    .loyalty-card {
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 10px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .lc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+    .lc-program { font-size: 9px; opacity: 0.55; letter-spacing: 0.08em; text-transform: uppercase; }
+    .lc-member { font-size: 11px; font-family: var(--mono); opacity: 0.6; }
+    .lc-pts { font-size: 30px; font-weight: 700; font-family: var(--mono); }
+    .lc-pts-label { font-size: 9px; opacity: 0.45; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+    .lc-stats { display: flex; gap: 14px; margin-top: 14px; font-size: 10px; }
+    .lc-stat-label { opacity: 0.45; margin-bottom: 2px; text-transform: uppercase; font-size: 9px; letter-spacing: 0.04em; }
+    .lc-stat-val { font-weight: 600; }
+    .lc-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: #F59E0B; color: #1C0800;
+      font-size: 9px; font-weight: 700;
+      padding: 3px 8px; border-radius: 20px;
+    }
+
+    /* Goal card */
+    .goal-card {
+      background: var(--card);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+    .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .goal-emoji { font-size: 22px; margin-bottom: 4px; }
+    .goal-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .goal-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .status-pill {
+      font-size: 9px; font-weight: 700;
+      padding: 3px 8px; border-radius: 20px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .status-on-track { background: #EAF3DE; color: #3B6D11; }
+    .status-at-risk { background: var(--amber-warn-bg); color: var(--amber-warn-text); }
+    .progress-track { background: #F3F4F6; border-radius: 999px; height: 7px; margin-bottom: 7px; }
+    .progress-fill { height: 7px; border-radius: 999px; }
+    .progress-footer { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); }
+    .progress-pct { font-weight: 600; color: var(--text-primary); }
+
+    /* Pointr card */
+    .pointr-card-outer {
+      background: var(--purple-deep);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .pointr-brand { color: white; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 16px; }
+    .barcode-wrap { background: white; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px; }
+    .barcode-lines { display: flex; gap: 1px; height: 60px; justify-content: center; align-items: stretch; }
+    .barcode-id { font-size: 10px; color: var(--purple-deep); margin-top: 7px; font-family: var(--mono); letter-spacing: 0.05em; }
+    .pointr-user { color: rgba(255,255,255,0.65); font-size: 12px; }
+    .pointr-secure { display: flex; align-items: center; justify-content: center; gap: 3px; color: rgba(255,255,255,0.35); font-size: 9px; margin-top: 3px; }
+
+    /* Programs list in scan screen */
+    .programs-list { background: var(--card); border: 0.5px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 70px; }
+    .pl-row { padding: 11px 13px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid var(--border); }
+    .pl-row:last-child { border-bottom: none; }
+    .pl-left { display: flex; align-items: center; gap: 9px; }
+    .pl-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .pl-name { font-size: 12px; color: var(--text-primary); }
+    .pl-fmt { font-size: 10px; color: var(--text-secondary); font-family: var(--mono); }
+
+    /* Learn */
+    .category-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 500; }
+    .chip-active { background: var(--purple-deep); color: white; }
+    .chip-idle { background: #F3F4F6; color: var(--text-secondary); }
+    .hero-article { background: var(--card); border: 0.5px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 10px; }
+    .ha-image { background: var(--purple-deep); height: 90px; display: flex; align-items: center; justify-content: center; }
+    .ha-body { padding: 12px; }
+    .ha-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .ha-new { background: #EAF3DE; color: #3B6D11; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+    .ha-readtime { font-size: 10px; color: var(--text-secondary); }
+    .ha-title { font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.35; }
+    .article-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 70px; }
+    .article-card { background: var(--card); border: 0.5px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .ac-image { height: 54px; }
+    .ac-body { padding: 8px; }
+    .ac-read { font-size: 9px; color: var(--text-secondary); margin-bottom: 3px; }
+    .ac-title { font-size: 11px; font-weight: 500; color: var(--text-primary); line-height: 1.3; }
+
+    /* Add CTA */
+    .add-cta { border: 1.5px dashed rgba(0,0,0,0.15); border-radius: 14px; padding: 13px; text-align: center; color: var(--text-secondary); font-size: 12px; margin-bottom: 70px; cursor: pointer; }
+    .add-cta i { font-size: 14px; margin-right: 3px; }
+
+    @media (max-width: 420px) {
+      .phone { width: 100%; border-radius: 32px; border-width: 7px; height: 700px; }
+      body { padding: 16px 8px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brand-bar">
+    <div class="brand-name">Pointr</div>
+    <div class="brand-badge">Preview v0.1</div>
+  </div>
+
+  <div class="phone">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <i class="ti ti-wifi" aria-hidden="true"></i>
+        <i class="ti ti-battery" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- WALLET -->
+      <div class="screen active" id="s-wallet">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <div style="font-size:11px;color:var(--text-secondary);">Good morning</div>
+            <div style="font-size:19px;font-weight:500;color:var(--text-primary);">Alex</div>
+          </div>
+          <i class="ti ti-bell" aria-hidden="true" style="font-size:22px;color:var(--text-secondary);"></i>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-label">Total Wallet Value</div>
+          <div class="hero-amount">$2,222</div>
+          <div class="hero-sub">4 programs · Estimated value</div>
+          <div class="hero-actions">
+            <button class="hero-action-btn"><i class="ti ti-download" aria-hidden="true"></i>Export</button>
+            <button class="hero-action-btn"><i class="ti ti-chart-bar" aria-hidden="true"></i>Insights</button>
+          </div>
+        </div>
+
+        <div class="coach-card">
+          <div class="coach-label">Pointr Coach</div>
+          <div class="coach-text">You're 34,210 pts from Tokyo Business Class. Route Amex spend via Velocity for 6 weeks to get there.</div>
+          <div class="coach-cta">See the plan →</div>
+        </div>
+
+        <div class="section-label">Your Programs</div>
+
+        <div class="program-row">
+          <div class="program-pip" style="background:var(--red-qf);"></div>
+          <div class="program-info">
+            <div class="program-name">Qantas FF</div>
+            <div class="program-meta">Updated today</div>
+          </div>
+          <div class="program-values">
+            <div class="program-pts">184,230</div>
+            <div class="program-val">≈ $1,382</div>
+          </div>
+        </div>
+
+        <div class="program-row">
+          <div class="program-pip" style="background:var(--violet-vel);"></div>
+          <div class="program-info">
+            <div class="program-name">Velocity</div>
+            <div class="program-meta">Updated 3 days ago</div>
+          </div>
+          <div class="program-values">
+            <div class="program-pts">62,100</div>
+            <div class="program-val">≈ $621</div>
+          </div>
+        </div>
+
+        <div class="program-row warn">
+          <div class="program-pip" style="background:var(--amber-warn);"></div>
+          <div class="program-info">
+            <div class="program-name">Flybuys</div>
+            <div class="program-meta warn">Expires in 67 days ⚠</div>
+          </div>
+          <div class="program-values">
+            <div class="program-pts">28,500</div>
+            <div class="program-val">≈ $143</div>
+          </div>
+        </div>
+
+        <div class="program-row">
+          <div class="program-pip" style="background:var(--green-er);"></div>
+          <div class="program-info">
+            <div class="program-name">Everyday Rewards</div>
+            <div class="program-meta">Updated 1 week ago</div>
+          </div>
+          <div class="program-values">
+            <div class="program-pts">15,200</div>
+            <div class="program-val">≈ $76</div>
+          </div>
+        </div>
+
+        <div class="add-cta"><i class="ti ti-plus" aria-hidden="true"></i>Add a program</div>
+      </div>
+
+      <!-- CARDS -->
+      <div class="screen" id="s-cards">
+        <div class="screen-header">
+          <div class="screen-title">Cards &amp; Loyalty</div>
+          <div class="screen-sub">4 programs · Est. $2,222 total</div>
+        </div>
+
+        <div class="loyalty-card" style="background:#1A0808;">
+          <div class="lc-header">
+            <div class="lc-program">Qantas Frequent Flyer</div>
+            <div class="lc-member">·· 1004</div>
+          </div>
+          <div class="lc-pts">184,230</div>
+          <div class="lc-pts-label">Points</div>
+          <div class="lc-stats">
+            <div><div class="lc-stat-label">Est. Value</div><div class="lc-stat-val">$1,382</div></div>
+            <div><div class="lc-stat-label">Per Point</div><div class="lc-stat-val" style="color:#86efac;">0.75¢</div></div>
+            <div><div class="lc-stat-label">Verified</div><div class="lc-stat-val">Today</div></div>
+          </div>
+        </div>
+
+        <div class="loyalty-card" style="background:#1A0638;">
+          <div class="lc-header">
+            <div class="lc-program">Velocity Frequent Flyer</div>
+            <div class="lc-member">·· 2209</div>
+          </div>
+          <div class="lc-pts">62,100</div>
+          <div class="lc-pts-label">Points</div>
+          <div class="lc-stats">
+            <div><div class="lc-stat-label">Est. Value</div><div class="lc-stat-val">$621</div></div>
+            <div><div class="lc-stat-label">Per Point</div><div class="lc-stat-val" style="color:#86efac;">1.00¢</div></div>
+            <div><div class="lc-stat-label">Verified</div><div class="lc-stat-val">Today</div></div>
+          </div>
+        </div>
+
+        <div class="loyalty-card" style="background:#3B1A00;">
+          <div class="lc-badge">EXPIRES 67 DAYS</div>
+          <div class="lc-header" style="margin-bottom:18px;">
+            <div class="lc-program">Flybuys</div>
+          </div>
+          <div class="lc-pts">28,500</div>
+          <div class="lc-pts-label">Points</div>
+          <div class="lc-stats">
+            <div><div class="lc-stat-label">Est. Value</div><div class="lc-stat-val">$143</div></div>
+            <div><div class="lc-stat-label">Per Point</div><div class="lc-stat-val" style="color:#FCA5A5;">0.50¢</div></div>
+            <div><div class="lc-stat-label">Verified</div><div class="lc-stat-val">Today</div></div>
+          </div>
+        </div>
+
+        <div class="add-cta"><i class="ti ti-plus" aria-hidden="true"></i>Add a program</div>
+      </div>
+
+      <!-- GOALS -->
+      <div class="screen" id="s-goals">
+        <div class="screen-header">
+          <div class="screen-title">Goals</div>
+          <div class="screen-sub">2 active · 1 completed</div>
+        </div>
+
+        <div class="goal-card">
+          <div class="goal-header">
+            <div>
+              <div class="goal-emoji">✈</div>
+              <div class="goal-name">Business Class to Tokyo</div>
+              <div class="goal-sub">318,000 Qantas Points needed</div>
+            </div>
+            <div class="status-pill status-on-track">ON TRACK</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="background:var(--purple-mid);width:58%;"></div>
+          </div>
+          <div class="progress-footer">
+            <span>184,230 / 318,000 pts</span>
+            <span class="progress-pct">58%</span>
+          </div>
+        </div>
+
+        <div class="goal-card">
+          <div class="goal-header">
+            <div>
+              <div class="goal-emoji">🛒</div>
+              <div class="goal-name">$500 grocery offset</div>
+              <div class="goal-sub">100,000 Flybuys needed</div>
+            </div>
+            <div class="status-pill status-at-risk">AT RISK</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="background:var(--amber-warn);width:29%;"></div>
+          </div>
+          <div class="progress-footer">
+            <span>28,500 / 100,000 · Expiring!</span>
+            <span class="progress-pct">29%</span>
+          </div>
+        </div>
+
+        <div class="add-cta"><i class="ti ti-plus" aria-hidden="true"></i>Set a new goal</div>
+      </div>
+
+      <!-- SCAN / POINTR CARD -->
+      <div class="screen" id="s-scan">
+        <div class="screen-header">
+          <div class="screen-title">Pointr Card</div>
+          <div class="screen-sub">Your loyalty barcodes, one place</div>
+        </div>
+
+        <div class="pointr-card-outer">
+          <div class="pointr-brand">POINTR</div>
+          <div class="barcode-wrap">
+            <div class="barcode-lines" id="barcode-el"></div>
+            <div class="barcode-id">P-0042-8823-1107</div>
+          </div>
+          <div class="pointr-user">Alex M.</div>
+          <div class="pointr-secure">
+            <i class="ti ti-lock" aria-hidden="true" style="font-size:10px;"></i>
+            Secure · Screen stays on
+          </div>
+        </div>
+
+        <div class="section-label">Shows barcode for</div>
+        <div class="programs-list">
+          <div class="pl-row">
+            <div class="pl-left"><div class="pl-dot" style="background:var(--red-qf);"></div><span class="pl-name">Qantas FF</span></div>
+            <span class="pl-fmt">CODE128</span>
+          </div>
+          <div class="pl-row">
+            <div class="pl-left"><div class="pl-dot" style="background:var(--violet-vel);"></div><span class="pl-name">Velocity</span></div>
+            <span class="pl-fmt">CODE128</span>
+          </div>
+          <div class="pl-row">
+            <div class="pl-left"><div class="pl-dot" style="background:var(--amber-warn);"></div><span class="pl-name">Flybuys</span></div>
+            <span class="pl-fmt">EAN-13</span>
+          </div>
+          <div class="pl-row">
+            <div class="pl-left"><div class="pl-dot" style="background:var(--green-er);"></div><span class="pl-name">Everyday Rewards</span></div>
+            <span class="pl-fmt">CODE128</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEARN -->
+      <div class="screen" id="s-learn">
+        <div class="screen-header">
+          <div class="screen-title">Learn</div>
+          <div class="screen-sub">Stay ahead of the game.</div>
+        </div>
+
+        <div class="category-chips">
+          <div class="chip chip-active">All</div>
+          <div class="chip chip-idle">Points Tips</div>
+          <div class="chip chip-idle">Stores</div>
+          <div class="chip chip-idle">Policy</div>
+        </div>
+
+        <div class="hero-article">
+          <div class="ha-image">
+            <i class="ti ti-news" aria-hidden="true" style="font-size:32px;color:rgba(255,255,255,.3);"></i>
+          </div>
+          <div class="ha-body">
+            <div class="ha-meta">
+              <div class="ha-new">NEW</div>
+              <span class="ha-readtime">3 min read · Today</span>
+            </div>
+            <div class="ha-title">Flybuys changes earn rates on fuel — what you need to know</div>
+          </div>
+        </div>
+
+        <div class="article-grid">
+          <div class="article-card">
+            <div class="ac-image" style="background:#1A0638;"></div>
+            <div class="ac-body">
+              <div class="ac-read">2 min read</div>
+              <div class="ac-title">Transfer bonus: Amex to QFF this month</div>
+            </div>
+          </div>
+          <div class="article-card">
+            <div class="ac-image" style="background:#1A0808;"></div>
+            <div class="ac-body">
+              <div class="ac-read">5 min read</div>
+              <div class="ac-title">How to value Qantas Points in 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end .content -->
+
+    <!-- Bottom nav -->
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn active" id="nb-wallet" onclick="go('wallet')" aria-label="Wallet">
+        <i class="ti ti-wallet" aria-hidden="true"></i>
+        <span>Wallet</span>
+      </button>
+      <button class="nav-btn" id="nb-cards" onclick="go('cards')" aria-label="Cards">
+        <i class="ti ti-credit-card" aria-hidden="true"></i>
+        <span>Cards</span>
+      </button>
+      <button class="nav-btn nav-scan" id="nb-scan" onclick="go('scan')" aria-label="Pointr Card scanner">
+        <i class="ti ti-scan" aria-hidden="true"></i>
+        <span>Scan</span>
+      </button>
+      <button class="nav-btn" id="nb-goals" onclick="go('goals')" aria-label="Goals">
+        <i class="ti ti-target" aria-hidden="true"></i>
+        <span>Goals</span>
+      </button>
+      <button class="nav-btn" id="nb-learn" onclick="go('learn')" aria-label="Learn">
+        <i class="ti ti-book" aria-hidden="true"></i>
+        <span>Learn</span>
+      </button>
+    </nav>
+
+  </div><!-- end .phone -->
+
+  <script>
+    var SCREENS = ['wallet','cards','goals','scan','learn'];
+    var cur = 'wallet';
+
+    function drawBarcode() {
+      var el = document.getElementById('barcode-el');
+      if (!el) return;
+      var ws = [3,1,2,1,3,1,1,2,1,3,2,1,1,2,3,1,2,1,1,3,1,2,1,3,1,1,2,3,1,1,2,1,3,2,1,1,3,1,2,1,1,2,3,1,1];
+      var h = '';
+      ws.forEach(function(w, i) {
+        h += i % 2 === 0
+          ? '<div style="background:#000;width:' + w + 'px;height:100%;"></div>'
+          : '<div style="width:' + w + 'px;height:100%;"></div>';
+      });
+      el.innerHTML = h;
+    }
+
+    function go(s) {
+      SCREENS.forEach(function(id) {
+        var sc = document.getElementById('s-' + id);
+        var btn = document.getElementById('nb-' + id);
+        if (sc) sc.classList.remove('active');
+        if (btn) {
+          btn.classList.remove('active');
+          if (id === 'scan') {
+            btn.style.color = '';
+          }
+        }
+      });
+
+      var sc = document.getElementById('s-' + s);
+      var btn = document.getElementById('nb-' + s);
+      if (sc) sc.classList.add('active');
+      if (btn) btn.classList.add('active');
+
+      var content = document.querySelector('.content');
+      if (content) content.scrollTop = 0;
+
+      if (s === 'scan') drawBarcode();
+      cur = s;
+    }
+
+    drawBarcode();
+  </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+# Australian Loyalty & Rewards Aggregation Landscape — Research Report for a Points-Tracking PWA
+
+**Prepared:** May 2026
+**Audience:** Founding team / product lead for a consumer points-tracking PWA targeting the Australian market
+
+## TL;DR
+
+- **The four programs to hardcode in v1** — Everyday Rewards, Flybuys, Qantas Frequent Flyer, and Velocity Frequent Flyer — all use round-number conversions that have been stable for years (Everyday Rewards and Flybuys both run on a "2,000 points = $10" model), but the cents-per-point *value* a user actually gets varies 5-10x depending on redemption choice. That gap (intrinsic conversion vs. realised value) is the single most defensible product wedge.
+- **There is no realistic programmatic path** to balance data for any major Australian loyalty program in 2026 — no public APIs, no Consumer Data Right (CDR) coverage, T&Cs that prohibit credential sharing, and no Plaid-equivalent for loyalty. Manual entry + OCR is the only viable v1 path, and credential-based aggregation carries meaningful legal and account-termination risk. Plan the product around this constraint rather than around a roadmap that depends on it being lifted.
+- **The competitive set in Australia is thin and content-led** (Point Hacks, Australian Frequent Flyer) rather than tool-led. AwardWallet works but has weak AU program coverage; Stocard was effectively wound down after its acquisition by Klarna (announced 7 July 2021). The gap to exploit is an Australian-first, opinionated **"what are my points actually worth and what should I do with them?"** product — not a generic loyalty-card wallet.
+
+---
+
+## 1. Australian Loyalty Program Landscape — Conversion Rates & Dollar Values
+
+### 1.1 Grocery & supermarket programs
+
+**Everyday Rewards (Woolworths Group)**
+
+- Core conversion: **2,000 points = $10** off your next shop (= 0.5 cents per point at face value). This is the long-standing baseline.
+- Partner conversion to Qantas: **2,000 Everyday Rewards points → 870 Qantas Points** historically. *This is the single most volatile data point — verify on the Everyday Rewards "Convert to Qantas Points" page on the day you ship.*
+- Redemption mechanics: members toggle between "Save with Points" (auto-redeem at supermarket) and "Convert to Qantas Points" in the Everyday Rewards app. Boosts and bonus point offers are the primary earn accelerator.
+- Coverage: Woolworths supermarkets, BWS, Big W, Ampol (fuel partnership), and a long list of partners.
+
+**Flybuys (Coles Group + Wesfarmers)**
+
+- Core conversion: **2,000 points = $10** off shop, redeemable at Coles, Kmart, Target, Officeworks, Liquorland, First Choice, and via the Flybuys Rewards Store.
+- Partner conversion to Velocity: historically **2,000 Flybuys points → 870 Velocity Points** — *verify before hardcoding*.
+- Other partner conversions historically available: Etihad Guest, ALL Accor (variable rates).
+- Redemption mechanics: in-store at checkout (1,000-point increments at Coles), online Rewards Store, or partner transfer.
+
+> **For v1 hardcoding:** the 2,000-pts = $10 (0.5¢/pt) face value for both programs is safe. The partner-airline conversion ratios are the volatile data — pull these live from the program's app/web page if at all possible and treat the hardcoded value as a fallback that the UI labels with "last verified [date]".
+
+### 1.2 Airline frequent flyer programs
+
+**Qantas Frequent Flyer** (Australia's largest loyalty program by member base)
+
+Indicative realised value per point by redemption type (Point Hacks / Australian Frequent Flyer valuation ranges, 2024–2025):
+
+| Redemption type | Indicative value (cents/point) |
+|---|---|
+| Classic Reward domestic economy | ~1.5–2.0¢ |
+| Classic Reward international economy | ~1.0–1.5¢ |
+| Classic Reward international premium/business (partner metal — Emirates, Qatar, Cathay) | ~3.0–6.0¢ (sweet spot) |
+| Classic Reward first class on partners | ~5–7¢ |
+| Classic Upgrade Reward (eligible commercial fares) | ~2.0–4.0¢ |
+| Qantas Hotels (Points + Pay or full points) | ~0.6–1.0¢ |
+| Qantas Wine | ~0.8–1.0¢ |
+| Qantas Store (Marketplace) | ~0.5–0.6¢ |
+| Pay with Points on qantas.com | ~0.6¢ (fixed) |
+
+**Velocity Frequent Flyer (Virgin Australia)**
+
+| Redemption type | Indicative value (cents/point) |
+|---|---|
+| Reward Seat domestic economy (Virgin) | ~1.5–2.0¢ |
+| Reward Seat partner premium cabins (Singapore Airlines, ANA, Qatar, United) | ~3.0–6.0¢ (sweet spot) |
+| Velocity Store | ~0.5–0.7¢ |
+| Pay with Points (Virgin website) | fixed low rate |
+| Hotels / car hire via Velocity | ~0.5–0.8¢ |
+
+**Key sweet spots widely cited in Australian frequent-flyer media:**
+- Qantas points → Emirates / Qatar / Cathay business class long-haul ex-Australia.
+- Velocity points → Singapore Airlines KrisFlyer business class to Europe; ANA Round The World was historically a famous sweet spot (verify current status as ANA's award chart has been revised).
+- Both: avoid Store / Pay-with-Points unless points are near expiry and you have no flight use case.
+
+### 1.3 QSR, fuel and pharmacy
+
+- **MyMacca's Rewards** — Points earned per dollar at McDonald's Australia; redemptions are a fixed menu of items (e.g. a small fries at the lowest tier). No cash equivalent; effective value is calculated against menu price. Verify current points-per-item table and tier structure.
+- **7-Eleven My 7-Eleven app** — Primarily a fuel-price-lock app rather than a points program in the traditional sense; the "fuel lock" feature lets users lock the lowest price within a radius for up to 7 days. There is a redemption/coupon component but limited "points balance" to track.
+- **Chemist Warehouse / My Chemist** — No major points program historically; loyalty has been catalogue-driven discounting. Verify whether anything new launched 2024–2026.
+- **Priceline Sister Club** — Points-based program; spending earns points that convert to dollar-off vouchers at set thresholds.
+
+### 1.4 Hotels (popular in Australia)
+
+- **Accor Plus / ALL Accor Live Limitless** — Australia is one of Accor's largest markets. Points are earned per €1 spent (variable per status). Reward Nights cost a variable points + cash amount. Accor Plus is the paid membership tier that bundles a free night + dining discounts; very popular in AU.
+- **Marriott Bonvoy** — Dynamic award pricing; typical realised value ~0.7–0.9¢ per point.
+- **IHG One Rewards** — Dynamic; typical ~0.5–0.7¢ per point.
+- **Hilton Honors** — Dynamic; typical ~0.5¢ per point; "Points & Money" usually best value.
+- **World of Hyatt** — Smaller Australian footprint, but high-value points (~1.7–2¢) per Point Hacks analysis.
+
+### 1.5 Credit card rewards & transfer partners (Australia)
+
+| Card program | Typical transfer partners (AU) | Notes |
+|---|---|---|
+| Amex Membership Rewards (Ascent / Gateway) | Velocity, Singapore KrisFlyer, Cathay, Emirates Skywards, Marriott Bonvoy, British Airways, Etihad. Notably **Qantas is not a direct transfer partner** for most Amex MR cards (Amex Qantas-branded cards earn QFF directly). | Best flexibility in AU market |
+| ANZ Rewards / Black | Velocity, KrisFlyer, Cathay, Asia Miles, Air NZ | Conversion ratios vary by tier |
+| NAB Rewards | Velocity, Cathay, Air NZ, others | Generally weaker transfer ratios |
+| CommBank Awards | Cathay, Velocity at some tiers | Limited partners |
+| Westpac Altitude Rewards | Velocity, KrisFlyer, Cathay, Malaysia Enrich | Tier-dependent |
+| Citi Premier (where still issued) | Velocity, KrisFlyer | Pulled back significantly post-NAB acquisition |
+| Bankwest More Rewards / Qantas | Either Velocity-style or direct QFF | Card-dependent |
+
+**Direct-earn QFF cards** (e.g. Qantas Premier, Amex Qantas Ultimate, ANZ Frequent Flyer Black, Westpac Altitude Black with Qantas option) earn QFF points directly rather than transferable points.
+
+### 1.6 Retail / other
+
+- **Bunnings PowerPass** — A trade account, not a consumer rewards program. No consumer points scheme at Bunnings.
+- **BWS / Dan Murphy's** — Endeavour Group; "My Dan's" and BWS use Everyday Rewards as the underlying engine. No separate point currency.
+- **Officeworks / Kmart / Target** — Roll up into Flybuys.
+
+---
+
+## 2. API & Data-Access Reality
+
+**Bottom line: there is no realistic programmatic path to consumer points balances in Australia in 2026.** Every major program is closed.
+
+| Program | Public API? | Partner API? | Aggregator partnerships | T&Cs on third-party access |
+|---|---|---|---|---|
+| Everyday Rewards | No | No (Woolworths Group keeps it closed; B2B partner data flows are bespoke) | None known | Prohibits sharing credentials and automated access |
+| Flybuys | No | No | None known | Prohibits credential sharing |
+| Qantas Frequent Flyer | No consumer balance API; Qantas's developer site has historically focused on flight status / fares for partners, not member data | Restricted partner-only | None for consumer aggregators | T&Cs prohibit credential sharing |
+| Velocity | No | No | None known | T&Cs prohibit credential sharing |
+| Amex MR | No consumer API in AU | — | AwardWallet has historically supported via login | T&Cs ambiguous; many jurisdictions treat as prohibited |
+| Hotels (Marriott, Hilton, IHG, Accor) | No public consumer APIs; Marriott has a developer portal but it is for property/booking partners | — | AwardWallet supports most via login | T&Cs prohibit automated access |
+
+**Aggregator precedent**
+- AwardWallet has operated globally for over a decade using credential-based screen-scraping. They have been blocked or rate-limited by various programs at various times (Southwest, Delta, American Airlines have all blocked them in the past). They explicitly disclaim that they may not always work and that programs can ban accounts that use them.
+- No Plaid-equivalent exists for loyalty in any jurisdiction; "open loyalty" is talked about but not standardised.
+
+**Australian-specific:**
+- The Consumer Data Right (CDR) covers banking and energy, and was expanded toward non-bank lending. Loyalty programs are **not** within CDR scope and there is no current consultation paper signalling they will be — verify with the latest Treasury / ACCC announcements.
+- There is no Australian equivalent of the EU's PSD2 for loyalty data.
+
+**Practical implications for the product:**
+- v1 must be manual entry + OCR. There is no shortcut.
+- Credential-based aggregation should be deferred until you have legal advice, a clear stance on per-program T&Cs, and accepted that some programs will block you.
+- Building toward a commercial API partnership with Qantas or Woolworths is theoretically possible (both have partner ecosystems) but would require revenue traction first.
+
+---
+
+## 3. Competitive Landscape
+
+### 3.1 Direct competitors
+
+**AwardWallet** (international)
+- The dominant global player. Tracks 600+ programs worldwide via credential-based login.
+- Pricing: Free tier (limited features, ads, no expiry tracking on every account) + **AwardWallet Plus at US$29.99/year** (per AwardWallet's own pricing page through 2024–2025).
+- AU program coverage: weak. Qantas and Velocity have variable support; Everyday Rewards and Flybuys are not credential-aggregated. Most AU users use it for airline + hotel tracking only.
+- Weakness against an AU-native product: doesn't speak AU sweet-spots, doesn't integrate AU supermarket programs, US-centric content.
+
+**Stocard** (acquired by Klarna)
+- Klarna announced the acquisition of Stocard on **7 July 2021** (per Klarna's press release of that date).
+- Post-acquisition: pivoted into a payments/shopping app; the loyalty card-wallet functionality was deprecated / de-prioritised in many markets through 2022. The user experience deteriorated significantly post-2022 and Stocard is effectively no longer a real competitor in AU as a dedicated points tracker.
+
+**Frequent Flyer Solutions (Australian)**
+- Sydney-based. Their flagship product is **Award Flight Assist / Reward Flight Finder** — a tool that searches airline award availability for QFF and Velocity members. Not a points-tracking app per se; complementary product.
+- Subscription model with a free tier and paid tier.
+
+**Point Hacks (AU) and Australian Frequent Flyer**
+- Content sites, not tools. Both publish points valuations, redemption guides, and sweet-spot articles. Point Hacks operates a credit card affiliate model. AFF runs a large community forum.
+- Neither operates a points-tracking app.
+
+### 3.2 International players who could enter
+
+- **The Points Guy** (US) — has an Australian editorial presence (TPG Australia) but no app launched in AU. Their US app does some points-valuation work.
+- **MaxRewards (US)** — focused on credit card rewards optimisation; not in AU.
+- **Curve / Revolut / Wise** — payment cards with reward features but not points trackers.
+
+### 3.3 Newer AU entrants (2023–2026)
+
+This is the area with the thinnest direct sourcing in this report. *Flag for verification: do a targeted search of the AU App Store + Product Hunt + Crunchbase + SmartCompany for "Australian points tracker" launches 2023–2026 before going to market.* The current understanding is that this space has remained surprisingly empty — likely because of the data-access problem.
+
+### 3.4 Gaps to exploit
+
+1. **AU-native conversion data** — no current product treats Everyday Rewards and Flybuys as first-class.
+2. **Cents-per-point estimation in AUD** — most global tools show "balance" but not "what's it worth in dollars today, given your typical redemption pattern".
+3. **Sweet-spot recommendations specific to AU origins** — "you have X Velocity points, here are 3 redemptions that get you >3¢/pt out of SYD/MEL/BNE".
+4. **Expiry alerts for AU programs** — QFF (18 months inactivity), Velocity (24 months inactivity), Everyday Rewards (12 months inactivity historically) — all have different rules and aggressive expiry. Verify each before shipping alert logic.
+5. **Bonus point offer aggregation** — Everyday Rewards Boosts and Flybuys offers are valuable, time-limited, and currently scattered across email + app.
+
+---
+
+## 4. Legal & Regulatory Considerations (Australia)
+
+### 4.1 Privacy Act 1988
+
+- Storing third-party login credentials (loyalty program usernames/passwords) on behalf of users brings the operator within scope of the Privacy Act as a regulated APP entity if turnover exceeds $3M (or other triggers apply, e.g. health service provider).
+- Even below the threshold, holding credentials raises practical and reputational risk well above other PII categories.
+- The **Privacy Legislation Amendment (Enforcement and Other Measures) Act 2022** raised the maximum penalty for serious or repeated interference with privacy under s 13G of the Privacy Act 1988 from AU$2.22 million to the **greater of: AU$50 million; three times the value of any benefit obtained through the misuse of information; or 30% of the entity's adjusted turnover during the relevant period.**
+- The **Privacy and Other Legislation Amendment Act 2024 received Royal Assent on 10 December 2024**, enacting a first tranche of the Attorney-General's Department review recommendations — including enhanced OAIC enforcement powers and a new Children's Online Privacy Code obligation. Broader reforms (including a statutory tort for serious invasion of privacy) remained pending as of May 2026.
+
+### 4.2 Australian Consumer Law (ACL)
+
+- The ACL prohibits misleading conduct. Marketing a points tracker as "official" or "in partnership with [Program]" when it is not would be problematic.
+- ACL does not specifically address scraping or aggregation; the issue is contract law (breach of program T&Cs) and potentially the **Copyright Act** if scraping copies substantial original expression.
+
+### 4.3 Computer access offences
+
+- The Criminal Code Act (Commonwealth) s 478.1 and equivalent state offences criminalise unauthorised access to computer data. Using a user's voluntarily-supplied credentials to access their own account is generally **not** an unauthorised access offence (the user authorised it), but the program operator may take a different view, and there are no settled Australian cases on aggregation specifically.
+- No Australian equivalent of US **hiQ Labs v LinkedIn** has been decided on loyalty scraping.
+
+### 4.4 ACCC Customer Loyalty Schemes Report — follow-up
+
+- The ACCC's **"Customer Loyalty Schemes — Final Report"** was published on **17 December 2019** and identified, by name, concerns about opaque data practices, devaluations without notice, expiry traps, and limited consumer ability to compare programs.
+- Many of the data-practice recommendations were folded into the ongoing Privacy Act reform process rather than producing standalone loyalty regulation.
+- The ACCC has not (to my knowledge) brought a major enforcement action against a loyalty program operator since the report, though there has been continued attention to opaque pricing and bait advertising. *Verify with the current ACCC actions register.*
+
+### 4.5 CDR & data portability
+
+- Loyalty is not in CDR scope as of 2026 and there is no announced expansion. Treasury has signalled that CDR rollout has been slower and more expensive than expected, which makes a near-term expansion to loyalty unlikely.
+
+---
+
+## 5. Technical Implementation
+
+### 5.1 OCR for points-balance screenshots
+
+| Option | Suitability for PWA | Cost | Notes |
+|---|---|---|---|
+| **Tesseract.js** | Excellent for client-side OCR in browser; ~10–15MB WASM bundle | Free (open source) | Accuracy is moderate; struggles with stylised digits and overlay graphics. Good enough for typed balance figures on clean backgrounds. |
+| **Google ML Kit (Text Recognition)** | Best for native; via PWA you'd hit Cloud Vision instead | Native: free; Cloud Vision: ~AU$2.30 per 1,000 images after free tier | Highest accuracy. Cloud cost manageable if OCR is gated behind premium tier. |
+| **AWS Textract** | Overkill for short numeric strings; designed for forms/tables | ~US$1.50 per 1,000 pages | Not recommended for simple balance reads. |
+| **Apple Vision (VNRecognizeTextRequest)** | Native iOS only; not available to PWA directly | Free | If you build a native shell later, this is the iOS choice. |
+
+**Recommendation:** Tesseract.js in v1 for free-tier users (privacy-friendly, on-device); Google Cloud Vision for premium-tier users when accuracy matters. Pre-process screenshots (crop to balance region, threshold, deskew) before OCR — this matters more than the engine choice.
+
+### 5.2 Barcode / QR storage and display
+
+- **Display** — for in-store scanning, render the user's loyalty barcode (typically Code 128 or QR) at high contrast, maximum brightness, locked screen orientation. The `bwip-js` library is the standard for browser-side barcode rendering.
+- **Apple Wallet** — supports loyalty passes (PassKit, `.pkpass` format). PWAs can serve a `.pkpass` file via a download link; iOS Safari recognises the MIME type and offers "Add to Apple Wallet". You cannot programmatically push to Wallet from a PWA — user must tap. You'll need an Apple Developer account and pass signing.
+- **Google Wallet** — supports loyalty cards via the Google Wallet API. A web-issued "Add to Google Wallet" button is supported. Requires Google Pay & Wallet console enrolment and class definitions per pass type.
+- **PWA-only fallback** — render the barcode in-app, which works fine for most scanners (cashiers scan straight off the screen).
+
+### 5.3 PWA capabilities in 2026 — current state vs native gap
+
+- **iOS Safari Web Push** — supported since **iOS 16.4, which shipped on 27 March 2023** (per Apple's official release notes), but only for PWAs added to the Home Screen. Reliable but requires the user to "install" the PWA.
+- **Camera access** — `getUserMedia()` works in iOS Safari and Chrome on Android. File input with `capture` attribute is the simplest path for OCR ("upload a screenshot").
+- **Offline storage** — IndexedDB widely supported; Cache API for assets. Quotas are generous (typically hundreds of MB).
+- **Background sync** — supported on Chrome/Android, **not on iOS Safari**. Periodic balance refresh in background is not viable on iOS.
+- **Geolocation** — works on both.
+- **Apple Wallet / Google Wallet integration** — works from PWA via standard MIME-typed downloads.
+
+**The remaining gap with native:** background activity (refresh, scan), tighter biometric integration, and App Store discovery. None block a v1.
+
+### 5.4 Suggested v1 architecture
+
+- **Frontend:** React/Next.js PWA, service worker, IndexedDB for offline balances.
+- **Backend:** Node/Express or serverless (Lambda/Cloud Functions); Postgres for user/program/balance entities; S3/GCS for screenshot blobs (encrypted at rest, short retention).
+- **OCR:** Tesseract.js client-side default; Cloud Vision premium path.
+- **Push:** VAPID for cross-browser web push.
+- **Auth:** Email + magic link or social; treat loyalty credentials as a separate, deferred capability.
+- **Hosting:** Vercel/Cloudflare Pages + AWS/GCP for backend; Sydney region for data residency given privacy considerations.
+
+---
+
+## 6. Business Model & Pricing Benchmarks
+
+### 6.1 Comparable pricing globally
+
+- **AwardWallet Plus** — US$29.99/year (current listed price on AwardWallet's pricing page).
+- **The Points Guy app** — free, ad/affiliate-funded.
+- **MaxRewards Gold (US)** — ~US$50/year.
+- **Australian fintech comparables** — Pocketbook (free, shut down), Frollo (B2B pivot), Up Bank (bank), WeMoney (free + premium ~AU$10/month).
+
+### 6.2 Recommended AU pricing structure (initial)
+
+| Tier | Price | Includes |
+|---|---|---|
+| Free | $0 | Up to 5 programs, manual entry only, basic balance + expiry tracking |
+| Premium | AU$4.99/month or AU$39/year | Unlimited programs, OCR, cents-per-point valuations, sweet-spot recommendations, expiry push alerts, Apple/Google Wallet pass generation |
+| Premium+ (later) | AU$9.99/month | Credential aggregation (where supported), redemption availability searching (QFF/Velocity classic rewards), family sharing |
+
+### 6.3 Affiliate / referral revenue
+
+- **Credit card affiliates** — the highest-revenue category in AU points media. Point Hacks' business model. Affiliate payouts of AU$50–$300 per approved card application are typical (verify with current affiliate networks: Commission Factory, Impact, direct).
+- **Hotel bookings** — Hotels.com / Booking.com affiliate; modest per-booking commission.
+- **Insurance, energy switching, foreign exchange** — secondary affiliates with reasonable AU CPA rates.
+
+### 6.4 Willingness-to-pay
+
+AU consumers pay for fitness (Strava ~AU$15/month), productivity (Notion, Todoist), and budgeting (YNAB ~AU$15/month, WeMoney ~AU$10). A points tracker at AU$4.99/month sits comfortably below these, justified if the value capture is "one extra business class redemption saves you thousands of dollars."
+
+---
+
+## 7. Best-Redemption Logic — What's Actually True
+
+### 7.1 Per-program "best value" defaults
+
+| Program | Default "best value" framing for v1 |
+|---|---|
+| Everyday Rewards | $10 in-store; Qantas conversion only if user is QFF-engaged and pursuing a flight redemption goal |
+| Flybuys | $10 in-store; Velocity conversion only if user is Velocity-engaged |
+| Qantas Frequent Flyer | International business class on partner metal (Emirates, Qatar, Cathay); avoid Store unless points expiring |
+| Velocity | Singapore Airlines / ANA / Qatar business class; avoid Store |
+| Amex MR | Hold until you have a specific redemption; transfer ratios are mostly 2:1 to airlines, so 100k MR ≈ 50k Velocity |
+| Hotel programs | Use for high cash-rate properties (resort, peak season) where cpp exceeds your valuation benchmark |
+| QSR (MyMacca's etc.) | Always redeem at the highest-value tier you can reach; points have no other escape route |
+
+### 7.2 Decision rules to encode
+
+1. **If a point is within 60 days of expiry**, value-floor it at the *easiest* redemption (Pay with Points, Store) rather than holding.
+2. **If a user transfers credit card points to an airline**, only flag it as a good move when the user has a specific Classic Reward / Reward Seat target identified — otherwise hold flexibility.
+3. **Devaluation risk**: flag any balance > 100k in a single airline program as concentration risk, since major devaluations historically happen with limited notice.
+4. **Earn velocity**: surface programs where the user is earning but not redeeming for > 12 months — these are the highest churn-risk balances.
+
+### 7.3 Source basis
+
+- Point Hacks publishes a periodic "Point Hacks Points Valuations" article — use as the primary anchor for cents-per-point figures, with attribution.
+- Australian Frequent Flyer forum discussions for community-validated sweet spots.
+- The Points Guy AU coverage is thinner than the US site but useful for partner-airline business class.
+
+---
+
+## Recommendations
+
+**Stage 0 — Before any code (now)**
+1. Verify the four hardcoded conversion rates (Everyday Rewards $/pt, Flybuys $/pt, EDR→QFF ratio, Flybuys→Velocity ratio) directly from each program's current public web page on the day you ship v1.
+2. Get a written legal memo on credential storage under the Privacy Act and on the contractual position re program T&Cs before any credential-based feature ships.
+3. Decide explicitly that v1 is manual + OCR. Don't promise credential aggregation on a public roadmap; it constrains your legal optionality.
+
+**Stage 1 — v1 ship (3-month target)**
+4. Launch with the four big programs hardcoded, plus a generic "other" with manual entry.
+5. Ship OCR via Tesseract.js, free for all users.
+6. Ship Apple Wallet / Google Wallet pass generation as the visible "delight" feature — this is what gets word-of-mouth.
+7. Pricing: free up to 5 programs; AU$39/year for unlimited + alerts + cents-per-point valuations.
+
+**Stage 2 — Monetisation (months 4–9)**
+8. Add credit card affiliate placements behind opt-in (e.g. "you have 80k Amex MR — see the top 3 ways to redeem, and the top 3 cards to earn more").
+9. Publish your own "AU Points Valuations" content monthly to build SEO around Point Hacks queries.
+10. Add Velocity / QFF Classic Reward availability search as Premium+ — this is your wedge against AwardWallet.
+
+**Stage 3 — Defensibility (months 9–18)**
+11. Approach Qantas Loyalty and Woolworths Loyalty for an official data partnership *only after* you have demonstrated user volume; both organisations have business-development teams for points partners.
+12. Evaluate native shell (Capacitor / React Native wrapper) only if PWA distribution caps out.
+
+**Benchmarks that would change the strategy**
+- If CDR scope is expanded to loyalty (an announced consultation paper) → fast-track credential-light architecture.
+- If a major AU points aggregator launches in 2026 with >$1M funding → consider a content-first repositioning ahead of feature parity.
+- If Apple Wallet's loyalty pass API gains live-balance updates (currently `.pkpass` updates are push-only and clunky) → barcode wallet feature becomes a much stronger hook.
+
+---
+
+## Caveats
+
+- **Research access on this pass was constrained** by an internal tooling error early in the workflow. The conversion-rate figures — especially the Everyday Rewards → Qantas and Flybuys → Velocity ratios, and the Point Hacks / AFF cents-per-point bands — must be re-verified against each program's current public terms and the latest Point Hacks valuations article before being hardcoded into the product. Partner ratios are the single most likely datapoint to have shifted in the last 12 months.
+- **Point Hacks and Australian Frequent Flyer valuations are point-in-time** and shift with each airline devaluation. Treat the cents-per-point ranges above as indicative for product copy, not authoritative for financial advice.
+- **The legal section is not legal advice.** The Privacy Act reform process has been moving in stages; while the 10 December 2024 first tranche (Privacy and Other Legislation Amendment Act 2024) and the AU$50M / 3x benefit / 30% turnover penalty regime under the 2022 Act are confirmed, the specific provisions in force in May 2026 (including any second-tranche reforms post-March 2026) must be confirmed with current legal counsel.
+- **The competitive landscape for AU-launched 2023–2026 points apps is the area with the thinnest sourcing** — do a targeted scan of the AU App Store, Crunchbase, Product Hunt, and SmartCompany / Startup Daily before launch.
+- **Stocard's current AU status** is described based on the July 2021 Klarna acquisition and the subsequent 2022 wind-down of card-wallet functionality; verify whether any product revival has occurred in 2024–2026.
+- **CDR scope as of May 2026** — confirm with the Treasury and ACCC consultation registers; the rollout schedule has been revised multiple times and there has been no announced loyalty-sector expansion.
+- **Inactivity-based expiry windows** (QFF 18 months, Velocity 24 months, Everyday Rewards 12 months historically) should be re-confirmed in each program's current T&Cs before being used to drive push notifications, because false-alert risk is high if the rules have shifted.
